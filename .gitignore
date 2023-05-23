@@ -1,0 +1,19 @@
+# Dependency directories
+/node_modules
+
+# Build output
+/dist
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+
+# Logs and debugging files
+/logs
+/debug.log
+
+# Miscellaneous
+.DS_Store
+Thumbs.db
