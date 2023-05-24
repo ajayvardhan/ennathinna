@@ -9,6 +9,3 @@ steps:
       - 'ORGANIZATION_ID=$_ORGANIZATION_ID'
       - 'OPEN_API_KEY=$_OPEN_API_KEY'
       - 'API_KEY=$_API_KEY'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
