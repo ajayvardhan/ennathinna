@@ -44,7 +44,7 @@ const authenticateAPIKey = (req: Request, res: Response, next: Function) => {
 // API endpoint
 app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
     const { cuisine, cookingTime, mealType, dietType } = req.body;
-    const prompt = `Suggest a dish for ${dietType} ${mealType} - Cuisine: ${cuisine}, Cooking Time: ${cookingTime}.`;
+    const prompt = `Suggest a ${dietType} ${mealType} dish from ${cuisine} cuisine with a cooking time of ${cookingTime}.`
     try {
         const response = await openai.createCompletion({
             model: 'text-davinci-003',
