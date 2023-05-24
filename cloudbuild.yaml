@@ -11,4 +11,4 @@ steps:
       - 'API_KEY=$_API_KEY'
 
 options:
-  logging: NONE
+  logging: CLOUD_LOGGING_ONLY
