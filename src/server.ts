@@ -44,7 +44,6 @@ app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
     const { cuisine, cookingTime, mealType } = req.body;
     const prompt = `Suggest a dish for ${mealType} - Cuisine: ${cuisine}, Cooking Time: ${cookingTime}. I just need the dish name without any descriptions or extra text.`;
     try {
-        console.log("🚀 ~ file: server.ts:47 ~ app.post ~ prompt:", prompt)
         const response = await openai.createCompletion({
             model: 'text-davinci-003',
             prompt,
@@ -53,7 +52,6 @@ app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
         const choices = response?.data?.choices;
         if (Array.isArray(choices) && choices.length > 0) {
             const data = choices[0].text?.replace(/(\r\n|\n|\r)/gm, '');
-            console.log("🚀 ~ file: server.ts:56 ~ app.post ~ data:", data)
             res.status(200).json(data);
         } else {
             throw new Error('Invalid response from OpenAI API');
