@@ -49,7 +49,7 @@ app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
         const response = await openai.createCompletion({
             model: 'text-davinci-003',
             prompt,
-            max_tokens: 50,
+            max_tokens: 15,
         });
         const choices = response?.data?.choices;
         if (Array.isArray(choices) && choices.length > 0) {
