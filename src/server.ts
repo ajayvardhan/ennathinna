@@ -2,6 +2,7 @@
 import express, { Request, Response } from 'express';
 import { Configuration, OpenAIApi } from 'openai';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ const port = 8080;
 
 // Middleware
 app.use(express.json());
+app.use(cors());
 
 // OpenAI configuration
 const configuration = new Configuration({
