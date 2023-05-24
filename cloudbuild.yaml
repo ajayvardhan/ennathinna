@@ -7,8 +7,10 @@ steps:
     args:
       - 'app'
       - 'deploy'
-      - '--env-vars'
-      - 'ORGANIZATION_ID=$_ORGANIZATION_ID,OPEN_API_KEY=$_OPEN_API_KEY,API_KEY=$_API_KEY'
+    env:
+      - 'ORGANIZATION_ID=$$_ORGANIZATION_ID'
+      - 'OPEN_API_KEY=$$_OPEN_API_KEY'
+      - 'API_KEY=$$_API_KEY'
   - name: 'gcr.io/cloud-builders/npm'
     args: ['start']
 
