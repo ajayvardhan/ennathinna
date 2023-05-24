@@ -43,13 +43,13 @@ const authenticateAPIKey = (req: Request, res: Response, next: Function) => {
 
 // API endpoint
 app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
-    const { cuisine, cookingTime, mealType } = req.body;
-    const prompt = `Suggest a dish for ${mealType} - Cuisine: ${cuisine}, Cooking Time: ${cookingTime}. I just need the dish name without any descriptions or extra text.`;
+    const { cuisine, cookingTime, mealType, dietType } = req.body;
+    const prompt = `Suggest a dish for ${dietType} ${mealType} - Cuisine: ${cuisine}, Cooking Time: ${cookingTime}.`;
     try {
         const response = await openai.createCompletion({
             model: 'text-davinci-003',
             prompt,
-            max_tokens: 10,
+            max_tokens: 50,
         });
         const choices = response?.data?.choices;
         if (Array.isArray(choices) && choices.length > 0) {
