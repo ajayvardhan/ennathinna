@@ -4,7 +4,8 @@
   "scripts": {
     "start": "node dist/src/server.js",
     "build": "tsc",
-    "deploy": "gcloud app deploy"
+    "deploy": "gcloud app deploy",
+    "create-env": "printenv > .env"
   },
   "dependencies": {
     "dotenv": "^16.0.3",
