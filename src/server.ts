@@ -13,7 +13,7 @@ const port = 8080;
 app.use(express.json());
 
 console.log('******************************* ENV VARIABLES *********************************');
-console.log(process.env);
+console.log(process.env.ORGANIZATION_ID);
 console.log('******************************* END *********************************');
 
 // OpenAI configuration
