@@ -43,8 +43,21 @@ const authenticateAPIKey = (req: Request, res: Response, next: Function) => {
 
 // API endpoint
 app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
-    const { cuisine, cookingTime, mealType, dietType } = req.body;
-    const prompt = `Suggest a ${dietType} ${mealType} dish from ${cuisine} cuisine with a cooking time of ${cookingTime}. Respond with just the dish name`
+    const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, micronutrients } = req.body;
+    const prompt = `Suggest a dish based on the following criteria: 
+    Cuisine: ${cuisine}
+    Cooking Time: ${cookingTime}
+    Meal Type: ${mealType}
+    Diet Type: ${dietType}
+    Dietary Restriction: ${dietaryRestrictions}
+    Flavor Profile: ${flavorProfiles}
+    Allergies: ${allergies}
+    Protein Content: ${proteinContent}
+    Carbohydrate Content: ${carbohydrateContent}
+    Fat Content: ${fatContent}
+    Micronutrients: ${micronutrients}
+    
+    Respond with just the dish name`
     try {
         const response = await openai.createCompletion({
             model: 'text-davinci-003',
@@ -53,7 +66,7 @@ app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
         });
         const choices = response?.data?.choices;
         if (Array.isArray(choices) && choices.length > 0) {
-            const data = choices[0].text?.replace(/(\r\n|\n|\r)/gm, '');
+            const data = choices[0].text?.replace(/[^a-zA-Z0-9 ]|(\r\n|\n|\r)/gm, '');
             res.status(200).json(data);
         } else {
             throw new Error('Invalid response from OpenAI API');
