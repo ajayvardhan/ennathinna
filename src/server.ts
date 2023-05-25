@@ -43,7 +43,7 @@ const authenticateAPIKey = (req: Request, res: Response, next: Function) => {
 
 // API endpoint
 app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
-    const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, micronutrients } = req.body;
+    const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent } = req.body;
     const prompt = `Suggest a dish based on the following criteria: 
     Cuisine: ${cuisine}
     Cooking Time: ${cookingTime}
@@ -55,7 +55,6 @@ app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
     Protein Content: ${proteinContent}
     Carbohydrate Content: ${carbohydrateContent}
     Fat Content: ${fatContent}
-    Micronutrients: ${micronutrients}
     
     Respond with just the dish name`
     try {
