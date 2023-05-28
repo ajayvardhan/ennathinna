@@ -109,6 +109,26 @@ app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
     }
 });
 
+
+app.post('/recipe', authenticateAPIKey, async (req: Request, res: Response) => {
+    const { dish } = req.body;
+    try {
+        const response = await openai.createChatCompletion({
+            model: 'gpt-3.5-turbo',
+            messages: [
+                { "role": "system", "content": "You are an expert chef specializing in the dish the user is asking for. When providing the recipe, please ensure it includes specific measurements for ingredients, cooking temperatures, and estimated cooking times. Additionally, it would be helpful if you could format the instructions in a clear, concise, and easy-to-follow manner. Give the response in markdown format. Thank you!" },
+                { "role": "user", "content": `Please provide me with a recipe for ${dish}` },
+            ],
+            temperature: 0,
+        });
+        const recipe = response?.data?.choices[0]?.message?.content;
+        res.status(200).json(recipe);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
