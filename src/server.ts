@@ -75,7 +75,7 @@ const constructPrompt = (cuisine: string, cookingTime: string, mealType: string,
         prompt += ` using the available ingredients: ${availableIngredients}.`;
     }
 
-    prompt += `${new Date().toISOString()}`
+    prompt += ` ${new Date().toISOString()}`
 
     return prompt;
 }
