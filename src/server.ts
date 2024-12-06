@@ -78,6 +78,7 @@ const getOpenAIResponse = async (systemMessage: string, userMessage: string) => 
     }
 };
 
+const dishCache: Record<string, Set<string>> = {};
 // API endpoint for dish recommendations
 app.post('/recommend-dish', async (req: Request, res: Response) => {
     const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, availableIngredients } = req.body;
@@ -97,9 +98,17 @@ app.post('/recommend-dish', async (req: Request, res: Response) => {
         availableIngredients,
     });
 
+    const cacheKey = userMessage;
+    const previouslyServedDishes = dishCache[cacheKey] || new Set();
+
     try {
-        const response = await getOpenAIResponse(systemMessage, userMessage);
-        res.status(200).json({ dishRecommendation: response });
+        const updatedPrompt = `${userMessage}. Do not suggest these dishes: [${Array.from(previouslyServedDishes).join(', ')}].`;
+        const dish = await getOpenAIResponse(systemMessage, updatedPrompt);
+
+        // Cache the served dish
+        if (!dishCache[cacheKey]) dishCache[cacheKey] = new Set();
+        dishCache[cacheKey].add(dish);
+        res.status(200).json({ dishRecommendation: dish });
     } catch (error) {
         res.status(500).json({ error: 'Failed to get dish recommendation from OpenAI' });
     }
