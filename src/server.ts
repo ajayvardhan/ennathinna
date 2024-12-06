@@ -82,7 +82,7 @@ const getOpenAIResponse = async (systemMessage: string, userMessage: string) => 
 app.post('/recommend-dish', async (req: Request, res: Response) => {
     const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, availableIngredients } = req.body;
 
-    const systemMessage = `Generate a dish name for a ${cuisine} ${mealType} dish. Respond with just the dish name and no extra words.`;
+    const systemMessage = `Generate a dish name for a ${cuisine} ${mealType} dish. Respond with just the dish name and no extra words. Use the conversation history context and ensure you don't repeat the same response for the same prompt.`;
     const userMessage = constructPrompt({
         cuisine,
         cookingTime,
