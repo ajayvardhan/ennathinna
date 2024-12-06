@@ -1,10 +1,15 @@
 // Import dependencies
 import express, { Request, Response } from 'express';
-import { Configuration, OpenAIApi } from 'openai';
+import { OpenAI } from "openai";
 import dotenv from 'dotenv';
 import cors from 'cors';
 
+// Initialize dotenv for environment variables
 dotenv.config();
+
+const openai = new OpenAI({
+    apiKey: process.env.OPEN_API_KEY
+});
 
 // Create Express app
 const app = express();
@@ -14,118 +19,104 @@ const port = 8080;
 app.use(express.json());
 app.use(cors());
 
-// OpenAI configuration
-const configuration = new Configuration({
-    organization: process.env.ORGANIZATION_ID,
-    apiKey: process.env.OPEN_API_KEY,
-});
+// Helper function to construct the user prompt
+const constructPrompt = ({
+    cuisine,
+    cookingTime,
+    mealType,
+    dietType,
+    dietaryRestrictions = '',
+    flavorProfiles = '',
+    allergies = '',
+    proteinContent = '',
+    carbohydrateContent = '',
+    fatContent = '',
+    availableIngredients = '',
+}: {
+    cuisine: string;
+    cookingTime: string;
+    mealType: string;
+    dietType: string;
+    dietaryRestrictions?: string;
+    flavorProfiles?: string;
+    allergies?: string;
+    proteinContent?: string;
+    carbohydrateContent?: string;
+    fatContent?: string;
+    availableIngredients?: string;
+}): string => {
+    let prompt = `Please recommend a dish that is ${cuisine} cuisine,`;
+    prompt += ` can be prepared in ${cookingTime}, suitable for ${mealType} and ${dietType} diet,`;
 
-// OpenAI instance creation
-const openai = new OpenAIApi(configuration);
-
-
-// API key verification middleware
-const authenticateAPIKey = (req: Request, res: Response, next: Function) => {
-    const apiKey = req.headers['x-api-key'] as string;
-
-    if (!apiKey) {
-        return res.status(401).json({ message: 'Missing API key' });
-    }
-
-    if (apiKey === process.env.OPEN_API_KEY) {
-        return res.status(403).json({ message: 'Invalid API key' });
-    }
-
-    // If the API key is valid, proceed to the next middleware
-    next();
-}
-
-const constructPrompt = (cuisine: string, cookingTime: string, mealType: string, dietType: string, dietaryRestrictions?: string, flavorProfiles?: string, allergies?: string, proteinContent?: string, carbohydrateContent?: string, fatContent?: string, availableIngredients?: string): string => {
-    let prompt = `Please recommend a dish that is`;
-
-    prompt += ` ${cuisine} cuisine,`;
-    prompt += ` can be prepared in ${cookingTime},`;
-    prompt += ` suitable for ${mealType} and ${dietType} diet,`;
-
-    if (dietaryRestrictions) {
-        prompt += ` without violating any ${dietaryRestrictions},`;
-    }
-
-    if (flavorProfiles) {
-        prompt += ` with ${flavorProfiles} flavor profile,`;
-    }
-
-    if (allergies) {
-        prompt += ` avoiding ${allergies},`;
-    }
-
-    if (proteinContent) {
-        prompt += ` with ${proteinContent} protein content,`;
-    }
-
-    if (carbohydrateContent) {
-        prompt += ` ${carbohydrateContent} carbohydrate content,`;
-    }
-
-    if (fatContent) {
-        prompt += ` and ${fatContent} fat content,`;
-    }
-
-    if (availableIngredients) {
-        prompt += ` using the available ingredients: ${availableIngredients}.`;
-    }
-
-    prompt += ` ${new Date().toISOString()}`
+    if (dietaryRestrictions) prompt += ` without violating any ${dietaryRestrictions},`;
+    if (flavorProfiles) prompt += ` with ${flavorProfiles} flavor profile,`;
+    if (allergies) prompt += ` avoiding ${allergies},`;
+    if (proteinContent) prompt += ` with ${proteinContent} protein content,`;
+    if (carbohydrateContent) prompt += ` ${carbohydrateContent} carbohydrate content,`;
+    if (fatContent) prompt += ` and ${fatContent} fat content,`;
+    if (availableIngredients) prompt += ` using the available ingredients: ${availableIngredients}.`;
 
     return prompt;
-}
+};
 
-
-
-// API endpoint
-app.post('/', authenticateAPIKey, async (req: Request, res: Response) => {
-    const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, availableIngredients } = req.body;
-    const prompt = constructPrompt(cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, availableIngredients);
-
+// OpenAI API interaction function
+const getOpenAIResponse = async (systemMessage: string, userMessage: string) => {
     try {
-        const response = await openai.createChatCompletion({
-            model: 'gpt-3.5-turbo',
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
             messages: [
-                { "role": "system", "content": "You are an expert chef specializing in the cuisine the user is asking for. You reply with short, to-the-point answers with no elaboration." },
-                { "role": "user", "content": prompt },
+                { role: 'system', content: systemMessage },
+                { role: 'user', content: userMessage },
             ],
             temperature: 0.7,
         });
-        const choices = response?.data?.choices;
-        if (Array.isArray(choices) && choices.length > 0) {
-            const data = choices[0].message?.content.replace(/[^a-zA-Z0-9 ]|(\r\n|\n|\r)/gm, '');
-            res.status(200).json(data);
-        } else {
-            throw new Error('Invalid response from OpenAI API');
-        }
+
+        return response.choices.pop()?.message.content || 'No response';
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('Internal Server Error');
+        console.error('Error interacting with OpenAI:', error);
+        throw new Error('OpenAI API request failed');
+    }
+};
+
+// API endpoint for dish recommendations
+app.post('/recommend-dish', async (req: Request, res: Response) => {
+    const { cuisine, cookingTime, mealType, dietType, dietaryRestrictions, flavorProfiles, allergies, proteinContent, carbohydrateContent, fatContent, availableIngredients } = req.body;
+
+    const systemMessage = `Generate a dish name for a ${cuisine} ${mealType} dish. Respond with just the dish name and no extra words.`;
+    const userMessage = constructPrompt({
+        cuisine,
+        cookingTime,
+        mealType,
+        dietType,
+        dietaryRestrictions,
+        flavorProfiles,
+        allergies,
+        proteinContent,
+        carbohydrateContent,
+        fatContent,
+        availableIngredients,
+    });
+
+    try {
+        const response = await getOpenAIResponse(systemMessage, userMessage);
+        res.status(200).json({ dishRecommendation: response });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get dish recommendation from OpenAI' });
     }
 });
 
-
-app.post('/recipe', authenticateAPIKey, async (req: Request, res: Response) => {
+// API endpoint for recipe generation
+app.post('/recipe', async (req: Request, res: Response) => {
     const { dish } = req.body;
+
+    const systemMessage = 'You are an expert chef. Provide a clear recipe with ingredients, cooking temperatures, and times.';
+    const userMessage = `Please provide me with a recipe for ${dish}`;
+
     try {
-        const response = await openai.createChatCompletion({
-            model: 'gpt-3.5-turbo',
-            messages: [
-                { "role": "system", "content": "You are an expert chef specializing in the dish the user is asking for. When providing the recipe, please ensure it includes specific measurements for ingredients, cooking temperatures, and estimated cooking times. Additionally, it would be helpful if you could format the instructions in a clear, concise, and easy-to-follow manner. Give the response in markdown format. Thank you!" },
-                { "role": "user", "content": `Please provide me with a recipe for ${dish}` },
-            ],
-            temperature: 0,
-        });
-        const recipe = response?.data?.choices[0]?.message?.content;
-        res.status(200).json(recipe);
+        const response = await getOpenAIResponse(systemMessage, userMessage);
+        res.status(200).json({ recipe: response });
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ error: 'Failed to generate recipe from OpenAI' });
     }
 });
 
